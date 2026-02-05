@@ -1,9 +1,0 @@
-[2026-02-04 20:45:17] Script started
-[2026-02-04 20:45:17] TXT files found in directory: ['01 - user_input.txt', '3.txt']
-[2026-02-04 20:45:17] ERROR occurred
-[2026-02-04 20:45:17] Multiple TXT files found: ['01 - user_input.txt', '3.txt']
-[2026-02-04 20:45:17] Traceback (most recent call last):
-  File "C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\create_user_input_from_txt.py", line 52, in <module>
-    raise ValueError(f"Multiple TXT files found: {txt_files}")
-ValueError: Multiple TXT files found: ['01 - user_input.txt', '3.txt']
-
