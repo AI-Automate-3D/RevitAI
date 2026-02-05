@@ -6,7 +6,8 @@ import os
 # CONFIGURATION - Load API key from api_config.json or environment variable
 # =============================================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(SCRIPT_DIR, "api_config.json")
+V1_DIR = os.path.dirname(SCRIPT_DIR)
+CONFIG_FILE = os.path.join(V1_DIR, "api_config.json")
 
 OPENAI_API_KEY = None
 

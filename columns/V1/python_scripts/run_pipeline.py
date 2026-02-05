@@ -15,10 +15,12 @@ from populate_column_id import populate_column_id
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-COLUMNS_FILE = os.path.join(SCRIPT_DIR, "columns.csv")
-BACKUP_DIR = os.path.join(SCRIPT_DIR, "backups")
-LOG_DIR = os.path.join(SCRIPT_DIR, "log")
-PROMPT_FILE = os.path.join(SCRIPT_DIR, "01 - user prompt.txt")
+# V1 directory is parent of python_scripts folder
+V1_DIR = os.path.dirname(SCRIPT_DIR)
+COLUMNS_FILE = os.path.join(V1_DIR, "columns.csv")
+BACKUP_DIR = os.path.join(V1_DIR, "backups")
+LOG_DIR = os.path.join(V1_DIR, "log")
+PROMPT_FILE = os.path.join(V1_DIR, "01 - user prompt.txt")
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(BACKUP_DIR, exist_ok=True)
 

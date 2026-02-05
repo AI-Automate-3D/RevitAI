@@ -47,12 +47,12 @@ def populate_column_id_file(input_path, output_path=None):
 
 
 if __name__ == "__main__":
-    # Standalone usage for original workflow
+    # Standalone usage
     import os
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    input_file = os.path.join(script_dir, "01 - initialise data", "original_columns.csv")
-    output_file = os.path.join(script_dir, "02 - change column sizes", "step_2_in - columns.csv")
+    v1_dir = os.path.dirname(script_dir)
+    input_file = os.path.join(v1_dir, "columns.csv")
 
-    df = populate_column_id_file(input_file, output_file)
+    df = populate_column_id_file(input_file)
     print(f"Populated column_id for {len(df)} rows")
-    print(f"Output saved to: {output_file}")
+    print(f"Updated: {input_file}")
