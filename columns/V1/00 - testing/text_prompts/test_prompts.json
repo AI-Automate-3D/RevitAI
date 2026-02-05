@@ -1,0 +1,28 @@
+{
+  "prompts": [
+    {
+      "number": 1,
+      "example_prompt": "For all columns on gridlines B to E and 2 to 4, make those with base_level L0 to L4 600mm, base_level L5 to L7 450mm, and the levels above that should be 400mm"
+    },
+    {
+      "number": 2,
+      "example_prompt": "For columns between L1 and L3, make them column type PT"
+    }
+  ]
+}
+    {
+      "number": 3,
+      "example_prompt": "columns at gridline B to E and 2 to 4 need to get thinner at higher levels
+
+form L0 to L4 it should be UC 356x406x634
+
+from L5 to L7 it should be UC 356x368x177
+
+everything above that should be UC 305x305x118"
+    }
+  ]
+}
+
+
+
+

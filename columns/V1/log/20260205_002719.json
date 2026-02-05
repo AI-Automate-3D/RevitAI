@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-02-05 00:27:16",
+  "input": "columns A1 need to be RC sq 400mm on all levels",
+  "operations": [
+    {
+      "query": {
+        "alpha": "A",
+        "numeric": "1"
+      },
+      "change": {
+        "type": "RC sq",
+        "size": "400mm"
+      },
+      "matched_count": 9
+    }
+  ],
+  "total_count": 270,
+  "status": "completed",
+  "error": null,
+  "ai_response": {
+    "operations": [
+      {
+        "query": {
+          "alpha": "A",
+          "numeric": "1"
+        },
+        "change": {
+          "type": "RC sq",
+          "size": "400mm"
+        }
+      }
+    ]
+  }
+}

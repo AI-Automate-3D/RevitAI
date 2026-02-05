@@ -1,0 +1,8 @@
+[2026-02-04 20:41:03] Script started
+[2026-02-04 20:41:03] ERROR occurred
+[2026-02-04 20:41:03] No TXT filename provided
+[2026-02-04 20:41:03] Traceback (most recent call last):
+  File "C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\create_user_input_from_txt.py", line 38, in <module>
+    raise ValueError("No TXT filename provided")
+ValueError: No TXT filename provided
+

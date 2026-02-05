@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-02-04 21:07:45",
+  "input": "change all columns above level 5 to 400x400",
+  "operations": [
+    {
+      "query": {
+        "level": ">5"
+      },
+      "change": {
+        "size": "400x400"
+      },
+      "matched_count": 90
+    }
+  ],
+  "total_count": 270,
+  "status": "completed",
+  "error": null,
+  "ai_response": {
+    "operations": [
+      {
+        "query": {
+          "level": ">5"
+        },
+        "change": {
+          "size": "400x400"
+        }
+      }
+    ]
+  }
+}

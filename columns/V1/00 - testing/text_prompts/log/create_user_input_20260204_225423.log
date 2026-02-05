@@ -1,0 +1,12 @@
+[2026-02-04 22:54:23] Script started
+[2026-02-04 22:54:23] TXT files found in directory: ['1.txt']
+[2026-02-04 22:54:23] Using detected TXT file: 1.txt
+[2026-02-04 22:54:23] Resolved TXT path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\1.txt
+[2026-02-04 22:54:23] Extracted prompt number: 1
+[2026-02-04 22:54:23] Output folder read from TXT (raw/normalized): ..\..
+[2026-02-04 22:54:23] Resolved output folder absolute path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1
+[2026-02-04 22:54:23] Loading prompt JSON: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\test_prompts.json
+[2026-02-04 22:54:23] Loaded 2 prompts from JSON
+[2026-02-04 22:54:23] Matched prompt text: For all columns on gridlines B to E and 2 to 4, make those with base_level L0 to L4 600mm, base_level L5 to L7 450mm, and the levels above that should be 400mm
+[2026-02-04 22:54:23] Wrote user input file to: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\01 - user prompt.txt
+[2026-02-04 22:54:23] Script completed successfully

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-02-05 00:10:14",
+  "input": "UC356x406x634\n\nchange all columns to type UC of the size listed above",
+  "operations": [
+    {
+      "query": {},
+      "change": {
+        "type": "UC",
+        "size": "356x406x634"
+      },
+      "matched_count": 270
+    }
+  ],
+  "total_count": 270,
+  "status": "completed",
+  "error": null,
+  "ai_response": {
+    "operations": [
+      {
+        "query": {},
+        "change": {
+          "type": "UC",
+          "size": "356x406x634"
+        }
+      }
+    ]
+  }
+}

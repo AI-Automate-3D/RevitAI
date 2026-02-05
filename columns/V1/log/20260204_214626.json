@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-02-04 21:46:25",
+  "input": "For columns between level 1 and level 3, make them column type PT",
+  "operations": [
+    {
+      "query": {
+        "level": "1-3"
+      },
+      "change": {
+        "type": "PT"
+      },
+      "matched_count": 90
+    }
+  ],
+  "total_count": 270,
+  "status": "completed",
+  "error": null,
+  "ai_response": {
+    "operations": [
+      {
+        "query": {
+          "level": "1-3"
+        },
+        "change": {
+          "type": "PT"
+        }
+      }
+    ]
+  }
+}

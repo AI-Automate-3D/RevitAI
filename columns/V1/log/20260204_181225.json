@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-02-04 18:12:23",
+  "input": "for all columns B to E and 2 to 4, make those with base_level 0 to 4 600x600, base_level 5 to 7 450x450, and the levels above that should be 400x400",
+  "operations": [
+    {
+      "query": {
+        "alpha": "B-E",
+        "numeric": "2-4",
+        "level": "0-4"
+      },
+      "change": {
+        "size": "600x600"
+      },
+      "filtered_count": 60
+    },
+    {
+      "query": {
+        "alpha": "B-E",
+        "numeric": "2-4",
+        "level": "5-7"
+      },
+      "change": {
+        "size": "450x450"
+      },
+      "filtered_count": 36
+    },
+    {
+      "query": {
+        "alpha": "B-E",
+        "numeric": "2-4",
+        "level": ">7"
+      },
+      "change": {
+        "size": "400x400"
+      },
+      "filtered_count": 12
+    }
+  ],
+  "total_count": 270,
+  "status": "completed"
+}

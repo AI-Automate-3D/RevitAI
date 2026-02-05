@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-02-04 21:34:10",
+  "input": "change columns at level 3 to 350x350",
+  "operations": [
+    {
+      "query": {
+        "level": "3"
+      },
+      "change": {
+        "size": "350x350"
+      },
+      "matched_count": 30
+    }
+  ],
+  "total_count": 270,
+  "status": "completed",
+  "error": null,
+  "ai_response": {
+    "operations": [
+      {
+        "query": {
+          "level": "3"
+        },
+        "change": {
+          "size": "350x350"
+        }
+      }
+    ]
+  }
+}

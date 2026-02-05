@@ -1,0 +1,12 @@
+[2026-02-04 20:55:02] Script started
+[2026-02-04 20:55:02] TXT files found in directory: ['4.txt']
+[2026-02-04 20:55:02] Using detected TXT file: 4.txt
+[2026-02-04 20:55:02] Resolved TXT path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\4.txt
+[2026-02-04 20:55:02] Extracted prompt number: 4
+[2026-02-04 20:55:02] Output folder read from TXT (raw/normalized): ..\..
+[2026-02-04 20:55:02] Resolved output folder absolute path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1
+[2026-02-04 20:55:02] Loading prompt JSON: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\test_prompts.json
+[2026-02-04 20:55:02] Loaded 5 prompts from JSON
+[2026-02-04 20:55:02] Matched prompt text: For all columns B to E and 2 to 4, make those with base_level 0 to 4 600x600, base_level 5 to 7 450x450, and the levels above that should be 400x400
+[2026-02-04 20:55:02] Wrote user input file to: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\01 - user prompt.txt
+[2026-02-04 20:55:02] Script completed successfully

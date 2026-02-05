@@ -1,0 +1,12 @@
+[2026-02-04 20:50:07] Script started
+[2026-02-04 20:50:07] TXT files found in directory: ['3.txt']
+[2026-02-04 20:50:07] Using detected TXT file: 3.txt
+[2026-02-04 20:50:07] Resolved TXT path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\3.txt
+[2026-02-04 20:50:07] Extracted prompt number: 3
+[2026-02-04 20:50:07] Output folder read from TXT (raw/normalized): ..\..
+[2026-02-04 20:50:07] Resolved output folder absolute path: C:\Users\cohiba\Desktop\Automation - AG\columns\V1
+[2026-02-04 20:50:07] Loading prompt JSON: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\00 - testing\text_prompts\test_prompts.json
+[2026-02-04 20:50:07] Loaded 5 prompts from JSON
+[2026-02-04 20:50:07] Matched prompt text: Make columns 5-10 small if they are text type
+[2026-02-04 20:50:07] Wrote user input file to: C:\Users\cohiba\Desktop\Automation - AG\columns\V1\01 - user_prompt.txt
+[2026-02-04 20:50:07] Script completed successfully
