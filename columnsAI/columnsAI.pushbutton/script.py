@@ -1,369 +1,192 @@
-# pyRevit script.py - Sync Structural Columns from CSV (Robust Version)
-# CSV assumptions:
-# - column_id is unique key (stored in Mark parameter)
-# - column_type = Revit Family name (e.g. "RC sq")
-# - size = Revit Type name inside that family (e.g. "500mm")
-# - base_level / top_level match Revit Level names exactly
-# - alpha_grid / numeric_grid match Revit Grid names exactly
+# pyRevit script.py - ColumnsAI Chat Interface
+# This script launches a chat window to get user input for column modifications,
+# runs the AI pipeline, and archives the conversation history.
 
 from pyrevit import revit, DB, forms
-import csv
+import os
 import sys
+import shutil
+from datetime import datetime
 
-doc = revit.doc
+# Get script directory
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DELETE_MISSING = False   # set True to delete columns not in CSV
+# File paths
+USER_INPUT_FILE = os.path.join(SCRIPT_DIR, "user_input.txt")
+INPUT_HISTORY_DIR = os.path.join(SCRIPT_DIR, "input_history")
+RUN_PIPELINE_SCRIPT = os.path.join(SCRIPT_DIR, "run_pipeline.py")
 
-# ----------------- helpers -----------------
-def collect_levels():
-    """Collect all levels in the project"""
-    levels = {}
-    try:
-        collector = DB.FilteredElementCollector(doc).OfClass(DB.Level)
-        for l in collector:
-            if l and hasattr(l, 'Name'):
-                levels[l.Name.strip()] = l
-    except Exception as e:
-        forms.alert("Error collecting levels: {}".format(str(e)))
-    return levels
+# Ensure directories exist
+os.makedirs(INPUT_HISTORY_DIR, exist_ok=True)
 
-def collect_grids():
-    """Collect all grids in the project"""
-    grids = {}
-    try:
-        collector = DB.FilteredElementCollector(doc).OfClass(DB.Grid)
-        for g in collector:
-            if g and hasattr(g, 'Name'):
-                grids[g.Name.strip()] = g
-    except Exception as e:
-        forms.alert("Error collecting grids: {}".format(str(e)))
-    return grids
 
-def grid_intersection_point(g1, g2):
+def archive_input(content):
     """
-    Intersect two grid curves and return XYZ point.
-    Uses line-line intersection in XY plane (works for any grid orientation).
+    Archive the user input to input_history folder with timestamp.
+
+    Args:
+        content: The user input text to archive
+
+    Returns:
+        Path to archived file
     """
-    try:
-        curve1 = g1.Curve
-        curve2 = g2.Curve
-
-        if not curve1 or not curve2:
-            return None
-
-        # Get start and end points of each curve
-        p1_start = curve1.GetEndPoint(0)
-        p1_end = curve1.GetEndPoint(1)
-        p2_start = curve2.GetEndPoint(0)
-        p2_end = curve2.GetEndPoint(1)
-
-        # Calculate intersection using 2D line-line math (ignore Z)
-        x1, y1 = p1_start.X, p1_start.Y
-        x2, y2 = p1_end.X, p1_end.Y
-        x3, y3 = p2_start.X, p2_start.Y
-        x4, y4 = p2_end.X, p2_end.Y
-
-        denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
-        if abs(denom) < 1e-10:  # parallel lines
-            return None
-
-        t = ((x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)) / denom
-
-        ix = x1 + t*(x2-x1)
-        iy = y1 + t*(y2-y1)
-
-        # Return point at Z=0 (base level elevation will be set separately)
-        return DB.XYZ(ix, iy, 0)
-
-    except Exception:
+    if not content or not content.strip():
         return None
 
-def existing_columns_by_mark():
-    """Get all existing structural columns indexed by their Mark parameter"""
-    out = {}
-    try:
-        cols = (DB.FilteredElementCollector(doc)
-                .OfCategory(DB.BuiltInCategory.OST_StructuralColumns)
-                .WhereElementIsNotElementType())
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archive_filename = "input_{}.txt".format(timestamp)
+    archive_path = os.path.join(INPUT_HISTORY_DIR, archive_filename)
 
-        for c in cols:
-            try:
-                # Use built-in Mark parameter (ALL_MODEL_MARK)
-                p = c.get_Parameter(DB.BuiltInParameter.ALL_MODEL_MARK)
-                if p and p.HasValue:
-                    mark = p.AsString()
-                    if mark:
-                        out[mark] = c
-            except:
-                continue
+    try:
+        with open(archive_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return archive_path
     except Exception as e:
-        forms.alert("Error collecting existing columns: {}".format(str(e)))
-
-    return out
-
-def get_all_column_types():
-    """Get a dict of all available column family types: {(family_lower, type_lower): symbol}"""
-    result = {}
-    try:
-        symbols = (DB.FilteredElementCollector(doc)
-                   .OfCategory(DB.BuiltInCategory.OST_StructuralColumns)
-                   .WhereElementIsElementType()
-                   .ToElements())
-
-        for s in symbols:
-            try:
-                # Get family name via SYMBOL_FAMILY_NAME_PARAM
-                fam_param = s.get_Parameter(DB.BuiltInParameter.SYMBOL_FAMILY_NAME_PARAM)
-                if not fam_param:
-                    continue
-                fam = (fam_param.AsString() or "").strip().lower()
-
-                # Get type name via SYMBOL_NAME_PARAM or ALL_MODEL_TYPE_NAME
-                type_param = s.get_Parameter(DB.BuiltInParameter.SYMBOL_NAME_PARAM)
-                if not type_param:
-                    type_param = s.get_Parameter(DB.BuiltInParameter.ALL_MODEL_TYPE_NAME)
-                if not type_param:
-                    continue
-                name = (type_param.AsString() or "").strip().lower()
-
-                if fam and name:
-                    result[(fam, name)] = s
-
-            except Exception:
-                continue
-
-    except Exception:
-        pass
-
-    return result
-
-def find_symbol_strict(family_name, type_name, type_cache=None):
-    """
-    Find a FamilySymbol by exact family and type name match.
-    Family name example: "RC sq"
-    Type name example: "500mm"
-    """
-    fam_key = (family_name or "").strip().lower()
-    type_key = (type_name or "").strip().lower()
-
-    if not fam_key or not type_key:
+        forms.alert("Failed to archive input: {}".format(str(e)))
         return None
 
-    if type_cache:
-        return type_cache.get((fam_key, type_key))
 
-    return None
+def save_user_input(content):
+    """
+    Save user input to user_input.txt file.
 
-def set_base_top_levels(inst, base_level, top_level):
-    """Set base and top levels for a column instance"""
+    Args:
+        content: The user input text
+
+    Returns:
+        True if successful, False otherwise
+    """
     try:
-        # Try to set base level
-        p_base = inst.get_Parameter(DB.BuiltInParameter.FAMILY_BASE_LEVEL_PARAM)
-        if p_base and not p_base.IsReadOnly:
-            p_base.Set(base_level.Id)
-
-        # Try to set top level
-        p_top = inst.get_Parameter(DB.BuiltInParameter.FAMILY_TOP_LEVEL_PARAM)
-        if p_top and not p_top.IsReadOnly:
-            p_top.Set(top_level.Id)
-
+        with open(USER_INPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(content)
         return True
     except Exception as e:
-        # Return False but don't crash
+        forms.alert("Failed to save user input: {}".format(str(e)))
         return False
 
-# ----------------- main -----------------
+
+def clear_user_input():
+    """Clear the user_input.txt file."""
+    try:
+        with open(USER_INPUT_FILE, "w", encoding="utf-8") as f:
+            f.write("")
+        return True
+    except Exception as e:
+        forms.alert("Failed to clear user input: {}".format(str(e)))
+        return False
+
+
+def run_pipeline():
+    """
+    Execute the run_pipeline.py script.
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Add script directory to Python path
+        if SCRIPT_DIR not in sys.path:
+            sys.path.insert(0, SCRIPT_DIR)
+
+        # Import and run the pipeline
+        import importlib
+        import run_pipeline as pipeline_module
+
+        # Reload the module to ensure fresh execution
+        importlib.reload(pipeline_module)
+
+        # Read the user input
+        with open(USER_INPUT_FILE, "r", encoding="utf-8") as f:
+            user_text = f.read().strip()
+
+        if not user_text:
+            forms.alert("No input to process!", exitscript=True)
+            return False
+
+        # Run the pipeline
+        result = pipeline_module.run_pipeline(user_text)
+        return True
+
+    except Exception as e:
+        forms.alert(
+            "Pipeline execution failed!\n\nError: {}\n\nType: {}".format(
+                str(e), type(e).__name__
+            ),
+            title="Pipeline Error"
+        )
+        import traceback
+        print(traceback.format_exc())
+        return False
+
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+
 try:
-    csv_path = forms.pick_file(file_ext="csv", title="Select columns CSV")
-    if not csv_path:
-        forms.alert("No CSV selected.", exitscript=True)
+    # Show input dialog
+    user_input = forms.ask_for_string(
+        default="",
+        prompt="Enter your column modification request:",
+        title="ColumnsAI - Natural Language Input"
+    )
 
-    # Read CSV
-    with open(csv_path, "r") as f:
-        rows = list(csv.DictReader(f))
+    # Check if user cancelled
+    if user_input is None:
+        forms.alert("Operation cancelled.", exitscript=True)
 
-    if not rows:
-        forms.alert("CSV file is empty!", exitscript=True)
+    # Check if input is empty
+    user_input = user_input.strip()
+    if not user_input:
+        forms.alert("No input provided!", exitscript=True)
 
-    # Collect project data
-    levels = collect_levels()
-    grids = collect_grids()
-    existing = existing_columns_by_mark()
-    type_cache = get_all_column_types()
-    csv_ids = set()
+    # Show confirmation
+    proceed = forms.alert(
+        "You entered:\n\n\"{}\"\n\nProceed with processing?".format(user_input),
+        title="Confirm Input",
+        yes=True,
+        no=True
+    )
 
-    # Check if we have necessary data
-    if not levels:
-        forms.alert("No levels found in project!", exitscript=True)
-    if not grids:
-        forms.alert("No grids found in project!", exitscript=True)
-    if not type_cache:
-        forms.alert("No structural column types found in project!\n\nAvailable types: {}".format(len(type_cache)), exitscript=True)
+    if not proceed:
+        forms.alert("Operation cancelled.", exitscript=True)
 
-    # Statistics
-    created = updated = skipped = deleted = 0
-    skip_reasons = {}
-    errors = []
+    # Save user input to file
+    if not save_user_input(user_input):
+        forms.alert("Failed to save input. Aborting.", exitscript=True)
 
-    def skip(reason, detail=""):
-        global skipped
-        skipped += 1
-        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
-        if detail:
-            errors.append("{}: {}".format(reason, detail))
+    print("User input saved to: {}".format(USER_INPUT_FILE))
 
-    # Start transaction
-    with revit.Transaction("Sync Columns From CSV"):
-        for idx, r in enumerate(rows):
-            try:
-                cid = (r.get("column_id") or "").strip()
-                if not cid:
-                    skip("missing column_id", "row {}".format(idx + 2))
-                    continue
+    # Run the AI pipeline
+    print("\nRunning AI pipeline...")
+    if not run_pipeline():
+        forms.alert("Pipeline execution failed. Check console for details.", exitscript=True)
 
-                csv_ids.add(cid)
+    print("\nPipeline completed successfully!")
 
-                # Get CSV values
-                base_name = (r.get("base_level") or "").strip()
-                top_name = (r.get("top_level") or "").strip()
-                gA_name = (r.get("alpha_grid") or "").strip()
-                gN_name = str(r.get("numeric_grid") or "").strip()
-                fam_name = (r.get("column_type") or "").strip()
-                type_name = (r.get("size") or "").strip()
+    # Archive the input
+    archive_path = archive_input(user_input)
+    if archive_path:
+        print("Input archived to: {}".format(archive_path))
 
-                # Validate levels
-                base_level = levels.get(base_name)
-                top_level = levels.get(top_name)
-                if not base_level or not top_level:
-                    skip("level not found", "{}".format(cid))
-                    continue
+    # Clear user_input.txt
+    if clear_user_input():
+        print("user_input.txt cleared.")
 
-                # Validate grids
-                gA = grids.get(gA_name)
-                gN = grids.get(gN_name)
-                if not gA or not gN:
-                    skip("grid not found", "{}".format(cid))
-                    continue
+    # Show success message
+    forms.alert(
+        "Pipeline completed successfully!\n\nYour column modifications have been processed.",
+        title="Success"
+    )
 
-                # Get intersection point
-                pt = grid_intersection_point(gA, gN)
-                if not pt:
-                    skip("grid intersection failed", "{}".format(cid))
-                    continue
-
-                # Find family symbol
-                sym = find_symbol_strict(fam_name, type_name, type_cache)
-                if not sym:
-                    skip("family/type not found", "{} - {}".format(fam_name, type_name))
-                    continue
-
-                # Activate symbol if needed
-                if not sym.IsActive:
-                    sym.Activate()
-                    doc.Regenerate()
-
-                # Check if column exists by Mark
-                inst = existing.get(cid)
-
-                if inst is None:
-                    # CREATE NEW COLUMN
-                    try:
-                        inst = doc.Create.NewFamilyInstance(
-                            pt, sym, base_level, DB.Structure.StructuralType.Column
-                        )
-
-                        if inst:
-                            # Set Mark parameter to column_id
-                            p_mark = inst.get_Parameter(DB.BuiltInParameter.ALL_MODEL_MARK)
-                            if p_mark and not p_mark.IsReadOnly:
-                                p_mark.Set(cid)
-
-                            # Set levels
-                            set_base_top_levels(inst, base_level, top_level)
-
-                            created += 1
-                        else:
-                            skip("failed to create", "{}".format(cid))
-
-                    except Exception as e:
-                        skip("creation error", "{}: {}".format(cid, str(e)))
-
-                else:
-                    # UPDATE EXISTING COLUMN
-                    try:
-                        # Update location
-                        loc = inst.Location
-                        if isinstance(loc, DB.LocationPoint):
-                            loc.Point = pt
-
-                        # Update type if different
-                        if inst.Symbol.Id != sym.Id:
-                            inst.Symbol = sym
-
-                        # Update levels
-                        set_base_top_levels(inst, base_level, top_level)
-
-                        updated += 1
-
-                    except Exception as e:
-                        skip("update error", "{}: {}".format(cid, str(e)))
-
-            except Exception as e:
-                skip("row processing error", "row {}: {}".format(idx + 2, str(e)))
-
-        # Delete columns not in CSV (only if enabled)
-        if DELETE_MISSING:
-            try:
-                for cid, inst in existing.items():
-                    if cid not in csv_ids:
-                        try:
-                            doc.Delete(inst.Id)
-                            deleted += 1
-                        except:
-                            pass
-            except Exception as e:
-                errors.append("Delete error: {}".format(str(e)))
-
-    # ----------------- report -----------------
-    msg_lines = [
-        "CSV Sync Complete",
-        "=" * 50,
-        "",
-        "Rows read  : {}".format(len(rows)),
-        "Created    : {}".format(created),
-        "Updated    : {}".format(updated),
-        "Deleted    : {}".format(deleted),
-        "Skipped    : {}".format(skipped),
-    ]
-
-    if skipped and skip_reasons:
-        msg_lines.append("")
-        msg_lines.append("Skip reasons:")
-        for k in sorted(skip_reasons.keys()):
-            msg_lines.append("  - {}: {}".format(k, skip_reasons[k]))
-
-    if errors and len(errors) <= 10:
-        msg_lines.append("")
-        msg_lines.append("Recent errors:")
-        for e in errors[-10:]:
-            msg_lines.append("  - {}".format(e))
-
-    # Show available types if family/type not found was an issue
-    if "family/type not found" in skip_reasons:
-        msg_lines.append("")
-        msg_lines.append("Available column types ({} found):".format(len(type_cache)))
-        for (fam, typ) in sorted(list(type_cache.keys())[:10]):
-            msg_lines.append("  - '{}' : '{}'".format(fam, typ))
-        if len(type_cache) > 10:
-            msg_lines.append("  ... and {} more".format(len(type_cache) - 10))
-
-    msg_lines.append("")
-    msg_lines.append("Columns use 'Mark' parameter for tracking (column_id)")
-
-    forms.alert("\n".join(msg_lines), title="Sync Complete")
+    print("\n" + "="*50)
+    print("ColumnsAI execution complete!")
+    print("="*50)
 
 except Exception as e:
-    forms.alert("CRITICAL ERROR: {}\n\nType: {}".format(str(e), type(e).__name__),
-                title="Script Failed")
+    forms.alert(
+        "CRITICAL ERROR: {}\n\nType: {}".format(str(e), type(e).__name__),
+        title="Script Failed"
+    )
     import traceback
     print(traceback.format_exc())

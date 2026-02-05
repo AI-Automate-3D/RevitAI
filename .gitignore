@@ -18,8 +18,9 @@ build/
 *.swo
 *~
 
-# Backup files
-columns/V1/backups/*.csv
+# Backup files and history
+columnsAI/columnsAI.pushbutton/backups/*.csv
+columnsAI/columnsAI.pushbutton/input_history/*.txt
 
 # API keys and config (if sensitive)
 **/api_config.json
