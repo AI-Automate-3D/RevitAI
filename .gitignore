@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+columns/V1/backups/*.csv
+
+# API keys and config (if sensitive)
+**/api_config.json
+
+# OS
+.DS_Store
+Thumbs.db

@@ -6,21 +6,24 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 
 import json
+import shutil
 from datetime import datetime
 import pandas as pd
 from ai_parser import parse_request
+from populate_column_id import populate_column_id
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-INPUT_FILE = os.path.join(SCRIPT_DIR, "02 - change column sizes", "step_2_in - columns.csv")
-OUTPUT_FILE = os.path.join(SCRIPT_DIR, "output_columns.csv")
+COLUMNS_FILE = os.path.join(SCRIPT_DIR, "columns.csv")
+BACKUP_DIR = os.path.join(SCRIPT_DIR, "backups")
 LOG_DIR = os.path.join(SCRIPT_DIR, "log")
 PROMPT_FILE = os.path.join(SCRIPT_DIR, "01 - user prompt.txt")
 os.makedirs(LOG_DIR, exist_ok=True)
+os.makedirs(BACKUP_DIR, exist_ok=True)
 
 # =============================================================================
-# LOGGING
+# LOGGING & BACKUP
 # =============================================================================
 def write_log(log_entry):
     log_filename = datetime.now().strftime("%Y%m%d_%H%M%S") + ".json"
@@ -28,6 +31,20 @@ def write_log(log_entry):
     with open(log_path, "w", encoding="utf-8") as f:
         json.dump(log_entry, f, indent=2)
     return log_path
+
+
+def create_backup(file_path):
+    """Create a timestamped backup of the columns file."""
+    if not os.path.isfile(file_path):
+        return None
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_filename = f"columns_backup_{timestamp}.csv"
+    backup_path = os.path.join(BACKUP_DIR, backup_filename)
+
+    shutil.copy2(file_path, backup_path)
+    print(f"Backup created: {backup_path}")
+    return backup_path
 
 # =============================================================================
 # FILTER LOGIC
@@ -103,8 +120,19 @@ def run_pipeline(user_text: str) -> str:
     }
 
     try:
-        if not os.path.isfile(INPUT_FILE):
-            raise FileNotFoundError(f"Input CSV not found: {INPUT_FILE}")
+        if not os.path.isfile(COLUMNS_FILE):
+            raise FileNotFoundError(f"Columns CSV not found: {COLUMNS_FILE}")
+
+        # Create backup before processing
+        backup_path = create_backup(COLUMNS_FILE)
+        log_entry["backup_file"] = backup_path
+
+        # Load CSV
+        columns = pd.read_csv(COLUMNS_FILE)
+
+        # Populate column_id before processing (ensures all existing columns have IDs)
+        columns = populate_column_id(columns)
+        log_entry["total_count"] = int(len(columns))
 
         # Parse request
         result = parse_request(user_text)
@@ -113,10 +141,6 @@ def run_pipeline(user_text: str) -> str:
         ops = result.get("operations", [])
         if not ops:
             raise RuntimeError(f"AI parsing produced no operations. Parser response: {result}")
-
-        # Load CSV
-        columns = pd.read_csv(INPUT_FILE)
-        log_entry["total_count"] = int(len(columns))
 
         columns["numeric_grid"] = pd.to_numeric(columns["numeric_grid"], errors="coerce")
 
@@ -143,10 +167,14 @@ def run_pipeline(user_text: str) -> str:
 
             log_entry["operations"].append(op_log)
 
-        # Save output
-        columns.to_csv(OUTPUT_FILE, index=False)
+        # Populate column_id after processing (in case new columns were added)
+        columns = populate_column_id(columns)
+
+        # Save output (overwrites original file)
+        columns.to_csv(COLUMNS_FILE, index=False)
         log_entry["status"] = "completed"
-        print(f"Output saved to: {OUTPUT_FILE}")
+        print(f"Output saved to: {COLUMNS_FILE}")
+        print(f"Backup saved to: {backup_path}")
 
     except Exception as e:
         log_entry["status"] = "failed"
@@ -158,7 +186,7 @@ def run_pipeline(user_text: str) -> str:
         log_path = write_log(log_entry)
         print(f"Log saved to: {log_path}")
 
-    return OUTPUT_FILE
+    return COLUMNS_FILE
 
 
 # =============================================================================
