@@ -1,7 +1,0 @@
-columns at gridline B to E and 2 to 4 need to get thinner at higher levels
-
-form L0 to L4 it should be UC 356x406x634
-
-from L5 to L7 it should be UC 356x368x177
-
-everything above that should be UC 305x305x118

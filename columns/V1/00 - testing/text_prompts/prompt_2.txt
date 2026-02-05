@@ -1,1 +1,0 @@
-For columns between L1 and L3, make them column type PT

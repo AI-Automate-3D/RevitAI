@@ -1,1 +1,0 @@
-For all columns on gridlines B to E and 2 to 4, make those with base_level L0 to L4 600mm, base_level L5 to L7 450mm, and the levels above that should be 400mm
