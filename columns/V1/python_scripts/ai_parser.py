@@ -7,7 +7,7 @@ import os
 # =============================================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 V1_DIR = os.path.dirname(SCRIPT_DIR)
-CONFIG_FILE = os.path.join(V1_DIR, "api_config.json")
+CONFIG_FILE = os.path.join(V1_DIR, "APIs", "api_config.json")
 
 OPENAI_API_KEY = None
 
