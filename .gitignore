@@ -5,6 +5,9 @@ ColumnsAI/obj/
 *.pdb
 *.cache
 
+# Installer output
+Installer/Output/
+
 # Python
 __pycache__/
 *.py[cod]

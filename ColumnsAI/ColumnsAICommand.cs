@@ -15,7 +15,13 @@ namespace ColumnsAI
         {
             try
             {
-                string addinDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                // The DLL lives in a sub-folder (net48/ or net8/) under the
+                // install root.  Data files sit in the install root.
+                string dllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string addinDir = File.Exists(Path.Combine(dllDir, "run_pipeline.py"))
+                    ? dllDir
+                    : Path.GetDirectoryName(dllDir);
+
                 string userInputFile = Path.Combine(addinDir, "user_input.txt");
                 string inputHistoryDir = Path.Combine(addinDir, "input_history");
                 string columnsCSV = Path.Combine(addinDir, "columns.csv");

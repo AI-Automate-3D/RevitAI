@@ -1,20 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>ColumnsAI</RootNamespace>
     <AssemblyName>ColumnsAI</AssemblyName>
     <LangVersion>7.3</LangVersion>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-
-    <!--
-      Set this to your Revit installation folder.
-      Override from command line:  msbuild /p:RevitInstallDir="C:\Program Files\Autodesk\Revit 2025"
-    -->
-    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit 2024</RevitInstallDir>
   </PropertyGroup>
 
+  <!-- Revit 2025+ needs WPF via SDK; .NET Framework gets it from GAC references below -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <!--
+    Revit API paths – adjust to match your installations.
+    Override from command line:
+      dotnet build -f net48  /p:RevitInstallDir="C:\Program Files\Autodesk\Revit 2023"
+      dotnet build -f net8.0-windows /p:RevitInstallDir="C:\Program Files\Autodesk\Revit 2025"
+  -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
+    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit 2024</RevitInstallDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit 2025</RevitInstallDir>
+  </PropertyGroup>
+
+  <!-- Revit API (same assembly names for every version) -->
   <ItemGroup>
     <Reference Include="RevitAPI">
       <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
@@ -24,6 +36,10 @@
       <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- WPF assemblies for .NET Framework (net8 gets them from UseWPF) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="WindowsBase" />
