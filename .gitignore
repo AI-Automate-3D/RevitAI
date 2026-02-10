@@ -1,3 +1,10 @@
+# Build output
+ColumnsAI/bin/
+ColumnsAI/obj/
+*.dll
+*.pdb
+*.cache
+
 # Python
 __pycache__/
 *.py[cod]
@@ -12,17 +19,26 @@ dist/
 build/
 
 # IDE
+.vs/
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.user
+*.suo
 
-# Backup files and history
-columnsAI/columnsAI.pushbutton/backups/*.csv
-columnsAI/columnsAI.pushbutton/input_history/*.txt
+# NuGet
+packages/
 
-# API keys and config (if sensitive)
+# Runtime data
+backups/*.csv
+input_history/*.txt
+debug_pipeline.log
+user_input.txt
+log/
+
+# API keys
 **/api_config.json
 
 # OS
